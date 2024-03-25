@@ -121,42 +121,52 @@ def winner(board):
     """
     Returns the winner of the game, if there is one.
     """
-    raise NotImplementedError
+    # raise NotImplementedError
     # check for a row win
     for row in board:
-        if (row[0] == row[1]) and (row[1] == row [2]):
+        if (row[0] != "EMPTY") and (row[0] == row[1]) and (row[1] == row [2]):
             return row[0]
 
     # check for a column win
     row_max = range(3)
     for i in row_max:
-        if (board[i][0] == board[i][0]) and (board[i][1] == board[i[2]]):
+        if (board[i][0] != "EMPTY") and (board[i][0] == board[i][0]) and (board[i][1] == board[i[2]]):
             return board[i][0]
 
     # check for a diagonal down to the right win
-    if (board[0][0] == board[1][1]) and (board[1][1] == board[2][2]):
-        return true
+    if (board[1][1] != "EMPTY") and (board[0][0] == board[1][1]) and (board[1][1] == board[2][2]):
+        return board[1][1]
 
     # check for a diagonal down to the left win
-    if (board[0][2] == board[1][1]) and (board[1][1] == board[2][0]):
-        return true
+    if (board[1][1] != "EMPTY") and (board[0][2] == board[1][1]) and (board[1][1] == board[2][0]):
+        return board[1][1]
 
-    return false
+    return None
 
 
 def terminal(board):
     """
     Returns True if game is over, False otherwise.
     """
-    raise NotImplementedError
-    # check to see if there are any empty spaces in the board
-    for row in board:
-        for column in row:
-            if board[row][column] is EMPTY:
-                return false
-
     # raise NotImplementedError
-    return true
+
+    # We have a 3 x 3 board, so mark off a range
+    row_max = range(3)
+
+    # check to see if there are any empty spaces in the board
+    # for i in row_max:
+    for row in board:
+        for j in row_max:
+            #if (board[i][j] == "EMPTY"):
+            if (row[j] == "EMPTY"):
+                return False
+
+    #for row in board:
+        #for column in row:
+            #if board[row][column] == EMPTY:
+                #return false
+
+    return True
 
 
 def utility(board):
