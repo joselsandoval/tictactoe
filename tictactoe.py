@@ -17,6 +17,13 @@ def initial_state():
             [EMPTY, EMPTY, EMPTY],
             [EMPTY, EMPTY, EMPTY]]
 
+def near_terminal_state():
+    """
+    Returns a test state of the board that is near terminal.
+    """
+    return[[EMPTY, EMPTY, EMPTY],
+            [EMPTY, X, X],
+            [EMPTY, EMPTY, O]]
 
 def player(board):
     """
@@ -186,10 +193,23 @@ def minimax(board):
     # for each possible action, there is a maximum to the minimax function.  Let's save the action and minimax reward value
     history_list = set()
 
+
     # if the board is a terminal board, the minimax function should return None
     if terminal(board) is True:
         # return utility(board)
         return None
+
+    # determine the curren player
+    current_player = player(board) 
+
+    # initialize the best value and best action
+    best_value = 0
+    best_action = (-1, -1)
+
+    if current_player == "X":
+        best_value = -2
+    else:
+        best_value = 2
 
     for action in actions(board):
         print(f"Terminal board found in one move to be, {board}")
@@ -206,18 +226,9 @@ def minimax(board):
         # if the action you are choosing results in a terminal board and that board beats my current best option, then record the action that resulted in that board
         if terminal(copy_board):
             
-            print(f"Terminal board found, {board}")
+            print(f"Terminal board found from board {board} and it is {copy_board}")
 
-            best_value = 0
-            best_board = initial_state()
-            best_action = (-1, -1)
-
-            current_player = player(board) 
-
-            if current_player == "X":
-                best_value = -2
-            else:
-                best_value = 2
+            # best_board = initial_state()
 
             current_value = utility(copy_board)
 
@@ -244,7 +255,6 @@ def minimax(board):
                 print(f"Better action is: {best_action}")
 
                 best_value = current_value
-                
             
         # if our action does not result in a terminal board, we need to recursively call the minimax function
         else:
@@ -255,10 +265,83 @@ def minimax(board):
     # return the best action
     return best_action
 
-def minimax_with_value(board)
+
+def minimax_with_value(board):
     # determines the highest score for a given branch of a decision tree
-    
-    return True
+    actionsValues = set()
+
+    # if the board is a terminal board, the minimax function should return None
+    if terminal(board) is True:
+        # return utility(board)
+        return None
+
+    # determine the curren player
+    current_player = player(board) 
+
+    # initialize the best value and best action
+    best_value = 0
+    best_action = (-1, -1)
+
+    if current_player == "X":
+        best_value = -2
+    else:
+        best_value = 2
+
+    for action in actions(board):
+        print(f"Terminal board found in one move to be, {board}")
+
+        # print(action)
+
+        # make a copy of the board
+        copy_board = clone_board(board)
+
+        # apply the result then return the minimax fuction for that board
+        copy_board = result(copy_board, action)
+
+
+        # if the action you are choosing results in a terminal board and that board beats my current best option, then record the action that resulted in that board
+        if terminal(copy_board):
+            
+            print(f"Terminal board found from board {board} and it is {copy_board}")
+
+            # best_board = initial_state()
+
+            current_value = utility(copy_board)
+
+            print(f"Current value of Terminal board, {current_value}")
+
+            # if we are X, trying to maximize our score and we get a better value
+            if (current_player == "X") and (current_value > best_value):
+                
+                print(f"Player X, Action better: {action} with utility {current_value} than {best_action}")
+
+                # save the action that resulted in the best board and save the best value associated with it
+                best_action = action
+                print(f"Better action is: {best_action}")
+                best_value = current_value
+
+            elif (current_player == "O") and (current_value < best_value):
+                
+                print(f"Player O, Action better: {action} than {best_action}")
+
+                # print(action)
+
+                # save the action that resulted in the best board and save the best value associated with it
+                best_action = action
+                print(f"Better action is: {best_action}")
+
+                best_value = current_value
+            
+            actionsValues.add((best_action, best_value))        
+            
+        # if our action does not result in a terminal board, we need to recursively call the minimax function
+        else:
+            # return the value of the minimax function for the particular board and save it in a tuple
+            latest_actionsValues= minimax_with_value(copy_board)
+            if latest_actionsValues is not None:
+                actionsValues.update(latest_actionsValues) 
+
+    return actionsValues
 
 
 def clone_board(board):
