@@ -1,8 +1,48 @@
 """
 Tic Tac Toe Player
 """
-
 import math
+
+class Node():
+    def __init__(self, state, parent, action, weight):
+        self.state = state
+        self.parent = parent
+        self.action = action
+        self.weight = weight
+
+
+class StackFrontier():
+    def __init__(self):
+        self.frontier = []
+
+    def add(self, node):
+        self.frontier.append(node)
+
+    def contains_state(self, state):
+        return any(node.state == state for node in self.frontier)
+
+    def empty(self):
+        return len(self.frontier) == 0
+
+    def remove(self):
+        if self.empty():
+            raise Exception("empty frontier")
+        else:
+            node = self.frontier[-1]
+            self.frontier = self.frontier[:-1]
+            return node
+
+
+class QueueFrontier(StackFrontier):
+
+    def remove(self):
+        if self.empty():
+            raise Exception("empty frontier")
+        else:
+            node = self.frontier[0]
+            self.frontier = self.frontier[1:]
+            return node
+
 
 X = "X"
 O = "O"
@@ -25,6 +65,14 @@ def near_terminal_state():
             [EMPTY, X, X],
             [EMPTY, EMPTY, O]]
 
+def o_for_win():
+    """
+    Returns a test state of the board that is near terminal.
+    """
+    return[[X, X, EMPTY],
+            [O, X, X],
+            [EMPTY, O, O]]
+
 def player(board):
     """
     Returns player who has the next turn on a board.
@@ -44,9 +92,9 @@ def player(board):
     # if the number of non-empty pieces is odd, like 1, then it is O's turn
     # else, if the number is even, like 0, or 2, it is X's turn
     if (count % 2 ) == 0:
-        return "X"
+        return X
     else:
-        return "Y"
+        return O
     # raise NotImplementedError
 
 
@@ -113,7 +161,7 @@ def winner(board):
     # check for a row win
     for i in range(3):
         if (board[i][0] is not EMPTY) and (board[i][0] == board[i][1]) and (board[i][1] == board[i][2]):
-            # print("row win")
+            print("row win")
             winner = board[i][0]
             # return board[i][0]
 
@@ -176,9 +224,9 @@ def utility(board):
     # presume only called if termal(board) is true
 
     # Check the winner and return the expected output
-    if winner(board) == "X":
+    if winner(board) == X:
         return 1
-    if winner(board) == "O":
+    if winner(board) == O:
         return -1
     # raise NotImplementedError
     else:
@@ -190,81 +238,158 @@ def minimax(board):
     Returns the optimal action for the current player on the board.
     """
     
-    # for each possible action, there is a maximum to the minimax function.  Let's save the action and minimax reward value
-    history_list = set()
-
-
     # if the board is a terminal board, the minimax function should return None
     if terminal(board) is True:
         # return utility(board)
         return None
 
+    # for each possible action, there is a maximum to the minimax function.  Let's save the action and minimax reward value
+    history_list = set()
+
+    
     # determine the curren player
     current_player = player(board) 
 
-    # initialize the best value and best action
-    best_value = 0
-    best_action = (-1, -1)
-
-    if current_player == "X":
-        best_value = -2
+    if current_player == X:
+        initial_weight = -2
     else:
-        best_value = 2
+        initial_weight = 2
 
-    for action in actions(board):
-        print(f"Terminal board found in one move to be, {board}")
+    # build a tree that represents the game state and all possible other states
+    tree = QueueFrontier()
 
-        # print(action)
+    # Initialize the frontier to just the starting position
+    start = Node(state=board, parent=None, action=None, weight=None)
+    frontier = QueueFrontier()
+    # frontier = StackFrontier()
+    frontier.add(start)
+    tree.add(start)
 
-        # make a copy of the board
-        copy_board = clone_board(board)
+    # print(start.parent)
+    # Keep track of the explored states
+    explored = []
 
-        # apply the result then return the minimax fuction for that board
-        copy_board = result(copy_board, action)
+    num_explored = 0
 
+    while not frontier.empty():
+        # pull off the current node on the frontier
+        node = frontier.remove()
+        print(f"Now exploring board on the frontier: {node.state}")
+        num_explored += 1
+        explored.append(node.state)
 
-        # if the action you are choosing results in a terminal board and that board beats my current best option, then record the action that resulted in that board
-        if terminal(copy_board):
-            
-            print(f"Terminal board found from board {board} and it is {copy_board}")
-
-            # best_board = initial_state()
-
-            current_value = utility(copy_board)
-
-            print(f"Current value of Terminal board, {current_value}")
-
-            # if we are X, trying to maximize our score and we get a better value
-            if (current_player == "X") and (current_value > best_value):
-                
-                print(f"Player X, Action better: {action} with utility {current_value} than {best_action}")
-
-                # save the action that resulted in the best board and save the best value associated with it
-                best_action = action
-                print(f"Better action is: {best_action}")
-                best_value = current_value
-
-            elif (current_player == "O") and (current_value < best_value):
-                
-                print(f"Player O, Action better: {action} than {best_action}")
-
-                # print(action)
-
-                # save the action that resulted in the best board and save the best value associated with it
-                best_action = action
-                print(f"Better action is: {best_action}")
-
-                best_value = current_value
-            
-        # if our action does not result in a terminal board, we need to recursively call the minimax function
+        # get the actions for the current board
+        # current_actions = actions(board)
+        current_actions = actions(node.state)
+        
+        # initialize the best value and best action
+        best_value = 0
+        best_action = (-1, -1)
+        
+        if current_player == X:
+            best_value = -2
         else:
+            best_value = 2
 
-            # return the value of the minimax function for the particular board and save it in a tuple
-            return minimax(copy_board)
-    
+        # enumerated_actions = print_actions(actions)
+        # print(f"Actions for {board} board: {enumerated_actions}")
+ 
+        for action in current_actions:
+            # make a copy of the board
+            # copy_board = clone_board(board)
+            copy_board = clone_board(node.state)
+
+            # apply the result (then return the minimax fuction for that board)
+            copy_board = result(copy_board, action)
+
+            # Check to see if we have explored this state, now we have the resulting board from the action
+            if copy_board not in explored:
+
+                # if the action you are choosing results in a terminal board and that board beats my current best option, then record the action that resulted in that board
+                if terminal(copy_board):
+            
+                    # print(f"Terminal board found in one move from board {board} with the action {action} and it is {copy_board}")
+                    print(f"Terminal board found in one move from board {node.state} with the action {action} and it is {copy_board}")
+
+                    # best_board = initial_state()
+
+                    current_value = utility(copy_board)
+
+                    print(f"Current value of Terminal board, {current_value}")
+
+                    # if we are X, trying to maximize our score and we get a better value
+                    if (current_player == X) and (current_value > best_value):
+                
+                        print(f"Player {current_player}, Action better: {action} with utility {current_value} than {best_action}")
+
+                        # save the action that resulted in the best board and save the best value associated with it
+                        best_action = action
+                        print(f"Better action is: {best_action}")
+                        best_value = current_value
+
+                    elif (current_player == O) and (current_value < best_value):
+                
+                        print(f"Player {current_player}, Action better: {action} than {best_action}")
+
+                        # print(action)
+
+                        # save the action that resulted in the best board and save the best value associated with it
+                        best_action = action
+                        print(f"Better action is: {best_action}")
+
+                        best_value = current_value
+            
+                    current_weight = utility(copy_board)
+
+        
+                # if our action does not result in a terminal board, we need to recursively call the minimax function
+                else:
+                    current_weight = None
+                    # return the value of the minimax function for the particular board and save it in a tuple
+                    # return minimax(copy_board)
+        
+                # each action is a node with parent start
+                # make a node for each action and add it to the frontier
+                # Create a node to the frontier to be explored
+                current_node = Node(state=copy_board, parent=board, action=action, weight=current_weight)
+                # add the current node to the frontier to be explored
+                frontier.add(current_node)
+                tree.add(current_node)
+
     # return the best action
     return best_action
 
+def print_actions(board):
+    enumerated_actions = ""
+    
+    action_count = 0
+    
+    # get the actions for the current board
+    current_actions = actions(board)
+
+    for action in current_actions:
+        item_count = 0
+        
+
+        action_str = ""
+        
+        if action_count != 0:
+            action_str += " "
+
+        action_str += "("
+
+        for item in action:
+            if item_count != 0:
+                action_str += ","
+            action_str = action_str + str(item)
+            item_count += 1
+
+        action_str += ")"
+
+        enumerated_actions += action_str
+        action_count += 1
+
+    return enumerated_actions
 
 def minimax_with_value(board):
     # determines the highest score for a given branch of a decision tree
@@ -282,7 +407,7 @@ def minimax_with_value(board):
     best_value = 0
     best_action = (-1, -1)
 
-    if current_player == "X":
+    if current_player == X:
         best_value = -2
     else:
         best_value = 2
@@ -311,7 +436,7 @@ def minimax_with_value(board):
             print(f"Current value of Terminal board, {current_value}")
 
             # if we are X, trying to maximize our score and we get a better value
-            if (current_player == "X") and (current_value > best_value):
+            if (current_player == X) and (current_value > best_value):
                 
                 print(f"Player X, Action better: {action} with utility {current_value} than {best_action}")
 
@@ -320,7 +445,7 @@ def minimax_with_value(board):
                 print(f"Better action is: {best_action}")
                 best_value = current_value
 
-            elif (current_player == "O") and (current_value < best_value):
+            elif (current_player == O) and (current_value < best_value):
                 
                 print(f"Player O, Action better: {action} than {best_action}")
 
@@ -340,6 +465,8 @@ def minimax_with_value(board):
             latest_actionsValues= minimax_with_value(copy_board)
             if latest_actionsValues is not None:
                 actionsValues.update(latest_actionsValues) 
+
+    # go through all the actions and values gathered to find out which one is rated the best
 
     return actionsValues
 
